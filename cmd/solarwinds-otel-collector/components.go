@@ -17,6 +17,7 @@ package main
 import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter"
 	"github.com/solarwinds/solarwinds-otel-collector/exporter/solarwindsexporter"
+	"github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension"
 	"go.opentelemetry.io/collector/exporter/debugexporter"
 	"go.opentelemetry.io/collector/exporter/nopexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
@@ -219,6 +220,7 @@ func components() (otelcol.Factories, error) {
 		sigv4authextension.NewFactory(),
 		solarwindsapmsettingsextension.NewFactory(),
 		sumologicextension.NewFactory(),
+		solarwindsextension.NewFactory(),
 	)
 
 	if err != nil {

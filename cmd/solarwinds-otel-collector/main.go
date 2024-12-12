@@ -16,6 +16,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/confmap/provider/aesprovider"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/confmap/provider/s3provider"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/confmap/provider/secretsmanagerprovider"
@@ -27,7 +29,6 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/otelcol"
-	"log"
 )
 
 func main() {

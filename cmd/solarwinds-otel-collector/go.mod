@@ -1,8 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector
 
-go 1.22.7
-
-toolchain go1.22.9
+go 1.23.4
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/confmap/provider/aesprovider v0.113.0
@@ -161,6 +159,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.113.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver v0.113.0
 	github.com/solarwinds/solarwinds-otel-collector/exporter/solarwindsexporter v0.113.0
+	github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension v0.113.0
 	go.opentelemetry.io/collector/component v0.113.0
 	go.opentelemetry.io/collector/confmap v1.19.0
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.19.0
@@ -712,3 +711,5 @@ require (
 )
 
 replace github.com/solarwinds/solarwinds-otel-collector/exporter/solarwindsexporter => ../../exporter/solarwindsexporter
+
+replace github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension => ../../extension/solarwindsextension

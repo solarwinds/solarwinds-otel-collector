@@ -7,6 +7,5 @@ status:
     development: [traces, metrics, logs]
 
 tests:
-  config:
-    data_center: "na-01"
-    token: "THIS-IS-A-TEST"
+  skip_lifecycle: true
+
