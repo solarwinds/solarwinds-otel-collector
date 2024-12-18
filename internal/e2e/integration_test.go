@@ -1,7 +1,10 @@
+//go:build integration
+
 package e2e
 
 import (
 	"context"
+	"github.com/testcontainers/testcontainers-go"
 	"io"
 	"log"
 	"path/filepath"
@@ -15,7 +18,6 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
 )

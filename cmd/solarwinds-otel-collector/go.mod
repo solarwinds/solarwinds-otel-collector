@@ -161,7 +161,7 @@ require (
 	github.com/solarwinds/solarwinds-otel-collector/exporter/solarwindsexporter v0.113.0
 	github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension v0.113.0
 	go.opentelemetry.io/collector/component v0.113.0
-	go.opentelemetry.io/collector/confmap v1.19.0
+	go.opentelemetry.io/collector/confmap v1.21.0
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.19.0
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.19.0
 	go.opentelemetry.io/collector/confmap/provider/httpprovider v1.19.0
@@ -713,3 +713,5 @@ require (
 replace github.com/solarwinds/solarwinds-otel-collector/exporter/solarwindsexporter => ../../exporter/solarwindsexporter
 
 replace github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension => ../../extension/solarwindsextension
+
+replace github.com/solarwinds/solarwinds-otel-collector/pkg/testutil => ../../pkg/testutil

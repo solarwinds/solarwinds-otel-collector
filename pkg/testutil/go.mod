@@ -1,6 +1,7 @@
 module github.com/solarwinds/solarwinds-otel-collector/pkg/testutil
 
 go 1.23.4
+
 require (
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/confmap v1.21.0
