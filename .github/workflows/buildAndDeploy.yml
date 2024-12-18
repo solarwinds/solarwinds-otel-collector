@@ -40,7 +40,11 @@ jobs:
         run: echo "tag=v${{ github.run_number }}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and Test
-        run: docker build . --file build/docker/Dockerfile --tag ${{ steps.generate-tag.outputs.tag }}
+        run: docker build . --file build/docker/Dockerfile --tag ${{ steps.generate-tag.outputs.tag }} --tag solarwinds-otel-collector:latest
+
+      - name: Integration Tests
+        run: find . -name go.mod -execdir go test --tags=integration ./... \; | ( ! grep FAIL )
+
 
   deploy_dockerhub:
     runs-on: ubuntu-latest
