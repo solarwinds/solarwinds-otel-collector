@@ -7,6 +7,9 @@ on:
       - "*.md"
     tags:
       - 'v*.*.*'
+    # TODO: Remove prior to merge!
+    branches:
+      - feature/integration-test-gha
 
   pull_request:
     branches: 
