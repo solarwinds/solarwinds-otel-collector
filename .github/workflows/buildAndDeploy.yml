@@ -46,7 +46,8 @@ jobs:
         run: docker build . --file build/docker/Dockerfile --tag ${{ steps.generate-tag.outputs.tag }} --tag solarwinds-otel-collector:latest
 
       - name: Integration Tests
-        run: find . -name go.mod -execdir go test --tags=integration ./... \; | ( ! grep FAIL )
+        working-directory: internal/e2e
+        run: go test -tags=integration
 
 
   deploy_dockerhub:
