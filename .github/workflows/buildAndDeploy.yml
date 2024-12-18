@@ -6,7 +6,7 @@ on:
       - "docs/**"
       - "*.md"
     tags:
-      - '*.*.*'
+      - 'v*.*.*'
 
   pull_request:
     branches: 
@@ -14,6 +14,9 @@ on:
       - release/**
 
   workflow_dispatch:
+
+env:
+  DOCKERHUB_IMAGE: solarwinds/solarwinds-otel-collector
 
 jobs:
   checks:
@@ -34,7 +37,108 @@ jobs:
 
       - name: Generate docker image tag
         id: generate-tag
-        run: echo "::set-output name=value::v${{ github.run_number }}-$(git rev-parse --short HEAD)"
+        run: echo "tag=v${{ github.run_number }}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and Test
-        run: docker build . --file build/docker/Dockerfile --tag ${{ steps.generate-tag.outputs.value }}
+        run: docker build . --file build/docker/Dockerfile --tag ${{ steps.generate-tag.outputs.tag }}
+
+  deploy_dockerhub:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    name: Deploy to docker hub
+    if: startsWith(github.ref, 'refs/tags/')
+    environment:
+      name: production
+      url: https://hub.docker.com/repository/docker/solarwinds/solarwinds-otel-collector
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Get image tag
+        id: get-tag
+        run: echo "tag=${GITHUB_REF#refs/tags/v*}" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: build/docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          provenance: false
+          sbom: false
+          push: true
+          tags: ${{ env.DOCKERHUB_IMAGE }}:${{ steps.get-tag.outputs.tag }}
+
+  create_and_push_docker_manifest:
+    runs-on: ubuntu-latest
+    name: Create Multi-platform Docker Manifest
+    needs:
+      - deploy_dockerhub
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get image tag
+        id: get-tag
+        run: echo "tag=${GITHUB_REF#refs/tags/v*}" >> $GITHUB_OUTPUT
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+
+      - name: Get linux manifest
+        run: |
+          docker manifest inspect ${{ env.DOCKERHUB_IMAGE }}:${{ steps.get-tag.outputs.tag }} > manifest.json
+
+      - name: Create multi-arch manifest
+        run: |
+          docker manifest create ${{ env.DOCKERHUB_IMAGE }}:${{ steps.get-tag.outputs.tag }}  \
+            --amend ${{ env.DOCKERHUB_IMAGE }}@$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' manifest.json) \
+            --amend ${{ env.DOCKERHUB_IMAGE }}@$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' manifest.json) 
+
+      - name: Push multi-arch manifest
+        run: |
+          docker manifest push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.get-tag.outputs.tag }}
+
+  create_release:
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    needs:
+      - create_and_push_docker_manifest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find previous tag
+        run: |
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          PREVIOUS_TAG=$(git tag --sort=version:refname | grep -B1 "^${CURRENT_TAG}$" | head -n 1)
+          echo "Previous tag: $PREVIOUS_TAG"
+          echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+
+      - name: Get current tag
+        id: get-tag
+        run: echo "tag=${GITHUB_REF#refs/tags/*}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          # for gh cli
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ steps.get-tag.outputs.tag }} \
+            --title ${{ steps.get-tag.outputs.tag }} \
+            --latest=false \
+            --generate-notes \
+            --notes-start-tag ${{ env.PREVIOUS_TAG }}
