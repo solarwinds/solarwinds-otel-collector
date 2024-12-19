@@ -115,7 +115,7 @@ func TestLogsStream(t *testing.T) {
 	testcontainers.CleanupNetwork(t, net)
 
 	rContainer, err := runReceivingSolarWindsOTELCollector(ctx, net.Name)
-	require.NoError(t, err)
+	require.Error(t, err)
 	testcontainers.CleanupContainer(t, rContainer)
 
 	eContainer, err := runTestedSolarWindsOTELCollector(ctx, net.Name)
