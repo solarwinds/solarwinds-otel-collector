@@ -115,7 +115,7 @@ func TestLogsStream(t *testing.T) {
 	testcontainers.CleanupNetwork(t, net)
 
 	rContainer, err := runReceivingSolarWindsOTELCollector(ctx, net.Name)
-	require.Error(t, err)
+	require.NoError(t, err)
 	testcontainers.CleanupContainer(t, rContainer)
 
 	eContainer, err := runTestedSolarWindsOTELCollector(ctx, net.Name)
@@ -178,7 +178,7 @@ func evaluateMetricsStream(
 		}
 	}
 	require.Equal(t, gms.MetricCount(), expectedCount)
-	evaluateHeartbeetMetrics(t, hbms)
+	evaluateHeartbeatMetric(t, hbms)
 }
 
 func evaluateTracesStream(
@@ -212,7 +212,7 @@ func evaluateTracesStream(
 		}
 	}
 
-	evaluateHeartbeetMetrics(t, ms)
+	evaluateHeartbeatMetric(t, ms)
 	require.Equal(t, expectedCount, trs.SpanCount())
 }
 
@@ -247,11 +247,11 @@ func evaluateLogsStream(
 		}
 	}
 
-	evaluateHeartbeetMetrics(t, ms)
+	evaluateHeartbeatMetric(t, ms)
 	require.Equal(t, expectedCount, lgs.LogRecordCount())
 }
 
-func evaluateHeartbeetMetrics(
+func evaluateHeartbeatMetric(
 	t *testing.T,
 	ms pmetric.Metrics,
 ) {
