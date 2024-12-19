@@ -18,6 +18,10 @@ You just need to include the SolarWinds Exporter in your exporter definitions an
 ```yaml
 exporters:
   solarwinds:
+extensions:
+  solarwinds:
+    token: "TOKEN"
+    data_center: "na-01"
 ```
 
 ## Full configuration
@@ -45,7 +49,7 @@ extensions:
     data_center: "na-01"
 ```
 > [!TIP]  
-> You can omit `extension` from the Solarwinds Exporter configuration above as there is only a single instance of the Solarwinds Extension.
+> You can omit `extension` from the Solarwinds Exporter configuration above if there's only a single instance of the Solarwinds Extension.
 
 - `extension` (optional) - This name identifies an instance of the [Solarwinds Extension](../../extension/solarwindsextension) to be used by this exporter to obtain its configuration. 
    If there is only a single instance of the extension, the configuration value is optional. The format mimics the identifier as it occurs in the collector configuration - 

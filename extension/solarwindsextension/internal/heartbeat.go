@@ -50,7 +50,7 @@ type Heartbeat struct {
 	beatInterval time.Duration
 }
 
-var alreadyRunningError = errors.New("heartbeat already running")
+var ErrAlreadyRunning = errors.New("heartbeat already running")
 
 func NewHeartbeat(ctx context.Context, set extension.Settings, cfg *Config) (*Heartbeat, error) {
 	set.Logger.Debug("Creating Heartbeat")
@@ -83,7 +83,7 @@ func (h *Heartbeat) Start(ctx context.Context, host component.Host) error {
 
 	h.logger.Debug("Starting Heartbeat routine")
 	if h.cancel != nil {
-		return alreadyRunningError
+		return ErrAlreadyRunning
 	}
 
 	err := h.exporter.start(ctx, host)

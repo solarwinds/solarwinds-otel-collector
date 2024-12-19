@@ -108,6 +108,10 @@ func (swiExporter *solarwindsExporter) initExporterType(
 	}
 	swiExporter.config.endpointURL = url
 
+	// Get TLS settings for testing.
+	insecure := endpointCfg.Insecure()
+	swiExporter.config.insecure = insecure
+
 	otlpExporter := otlpexporter.NewFactory()
 	otlpCfg, err := swiExporter.config.OTLPConfig()
 	if err != nil {
@@ -130,7 +134,16 @@ func (swiExporter *solarwindsExporter) initExporterType(
 
 }
 
-func findExtension(extensions map[component.ID]component.Component, cfgExtensionID *component.ID) *solarwindsextension.SolarwindsExtension {
+// findExtension returns a found Solarwinds Extension or nil
+// if not found. Respecting these rules:
+//   - If the name is provided and it's found, return it.
+//   - If no name is provided and there's only one Solarwinds Extension,
+//     return it.
+//   - Otherwise, return nil.
+func findExtension(
+	extensions map[component.ID]component.Component,
+	cfgExtensionID *component.ID,
+) *solarwindsextension.SolarwindsExtension {
 	foundExtensions := make([]*solarwindsextension.SolarwindsExtension, 0)
 
 	for foundExtensionID, ext := range extensions {

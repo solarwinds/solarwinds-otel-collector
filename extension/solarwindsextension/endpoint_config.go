@@ -23,6 +23,7 @@ import (
 type EndpointConfig interface {
 	Url() (string, error)
 	Token() configopaque.String
+	Insecure() bool
 }
 
 type endpointConfig struct{ cfg *internal.Config }
@@ -39,4 +40,8 @@ func (c *endpointConfig) Url() (string, error) {
 
 func (c *endpointConfig) Token() configopaque.String {
 	return c.cfg.IngestionToken
+}
+
+func (c *endpointConfig) Insecure() bool {
+	return c.cfg.Insecure
 }

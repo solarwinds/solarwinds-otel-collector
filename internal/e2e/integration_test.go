@@ -1,13 +1,28 @@
+// Copyright 2024 SolarWinds Worldwide, LLC. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 //go:build integration
 
 package e2e
 
 import (
 	"context"
+	"fmt"
 	"github.com/testcontainers/testcontainers-go"
 	"io"
 	"log"
-	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -19,14 +34,11 @@ import (
 	"go.opentelemetry.io/collector/pdata/ptrace"
 
 	"github.com/testcontainers/testcontainers-go/network"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 const (
-	receivingContainer  = "receiver"
-	testedContainer     = "sut"
-	generatingContainer = "generator"
-	port                = 17016
+	resourceAttributeName  = "resource.attributes.testing_attribute"
+	resourceAttributeValue = "testing_value"
 )
 
 func TestMetricStream(t *testing.T) {
@@ -46,46 +58,19 @@ func TestMetricStream(t *testing.T) {
 
 	cmd := []string{
 		"metrics",
-		"--metrics", "10",
+		"--metrics", strconv.Itoa(samplesCount),
 		"--otlp-insecure",
-		"--otlp-endpoint", "sut:17016",
-		"--otlp-attributes", "resource.attributes.testing_attribute=\"testing_value\"",
+		"--otlp-endpoint", fmt.Sprintf("%s:%d", testedContainer, port),
+		"--otlp-attributes", fmt.Sprintf("%s=\"%s\"", resourceAttributeName, resourceAttributeValue),
 	}
 
 	gContainer, err := runGeneratorContainer(ctx, net.Name, cmd)
 	require.NoError(t, err)
 	testcontainers.CleanupContainer(t, gContainer)
 
-	<-time.After(10 * time.Second)
-	log.Println("***: evaluation in progress")
+	<-time.After(collectorRunningPeriod)
 
-	expectedMetricsCount := 10
-	evaluateMetricsStream(t, ctx, rContainer, expectedMetricsCount)
-}
-
-func evaluateMetricsStream(
-	t *testing.T,
-	ctx context.Context,
-	container testcontainers.Container,
-	expectedCount int,
-) {
-	// Obtain result from container.
-	lines, err := loadResultFile(ctx, container, "/tmp/result.json")
-	require.NoError(t, err)
-
-	ms := pmetric.NewMetrics()
-	jum := new(pmetric.JSONUnmarshaler)
-	for _, line := range lines {
-		m, err := jum.UnmarshalMetrics([]byte(line))
-		if err != nil {
-			continue
-		}
-
-		require.Equal(t, m.ResourceMetrics().Len(), 1, "it must contain exactly one resource metric")
-		evaluateResourceAttributes(t, m.ResourceMetrics().At(0).Resource().Attributes())
-		m.ResourceMetrics().MoveAndAppendTo(ms.ResourceMetrics())
-	}
-	require.Equal(t, ms.MetricCount(), expectedCount)
+	evaluateMetricsStream(t, ctx, rContainer, samplesCount)
 }
 
 func TestTracesStream(t *testing.T) {
@@ -105,46 +90,21 @@ func TestTracesStream(t *testing.T) {
 
 	cmd := []string{
 		"traces",
-		"--traces", "10",
+		"--traces", strconv.Itoa(samplesCount),
 		"--otlp-insecure",
-		"--otlp-endpoint", "sut:17016",
-		"--otlp-attributes", "resource.attributes.testing_attribute=\"testing_value\"",
+		"--otlp-endpoint", fmt.Sprintf("%s:%d", testedContainer, port),
+		"--otlp-attributes", fmt.Sprintf("%s=\"%s\"", resourceAttributeName, resourceAttributeValue),
 	}
 
 	gContainer, err := runGeneratorContainer(ctx, net.Name, cmd)
 	require.NoError(t, err)
 	testcontainers.CleanupContainer(t, gContainer)
 
-	<-time.After(10 * time.Second)
-	log.Println("***: evaluation in progress")
+	<-time.After(collectorRunningPeriod)
 
-	expectedTracesCount := 10 * 2
+	// Traces coming in couples.
+	expectedTracesCount := samplesCount * 2
 	evaluateTracesStream(t, ctx, rContainer, expectedTracesCount)
-}
-
-func evaluateTracesStream(
-	t *testing.T,
-	ctx context.Context,
-	container testcontainers.Container,
-	expectedCount int,
-) {
-	// Obtain result from container.
-	lines, err := loadResultFile(ctx, container, "/tmp/result.json")
-	require.NoError(t, err)
-
-	trs := ptrace.NewTraces()
-	jum := new(ptrace.JSONUnmarshaler)
-	for _, line := range lines {
-		tr, err := jum.UnmarshalTraces([]byte(line))
-		if err != nil {
-			continue
-		}
-
-		require.Equal(t, tr.ResourceSpans().Len(), 1, "it must contain exactly one resource span")
-		evaluateResourceAttributes(t, tr.ResourceSpans().At(0).Resource().Attributes())
-		tr.ResourceSpans().MoveAndAppendTo(trs.ResourceSpans())
-	}
-	require.Equal(t, expectedCount, trs.SpanCount())
 }
 
 func TestLogsStream(t *testing.T) {
@@ -164,22 +124,96 @@ func TestLogsStream(t *testing.T) {
 
 	cmd := []string{
 		"logs",
-		"--logs", "10",
-		"--body", "testing log body",
+		"--logs", strconv.Itoa(samplesCount),
 		"--otlp-insecure",
-		"--otlp-endpoint", "sut:17016",
-		"--otlp-attributes", "resource.attributes.testing_attribute=\"testing_value\"",
+		"--otlp-endpoint", fmt.Sprintf("%s:%d", testedContainer, port),
+		"--otlp-attributes", fmt.Sprintf("%s=\"%s\"", resourceAttributeName, resourceAttributeValue),
 	}
 
 	gContainer, err := runGeneratorContainer(ctx, net.Name, cmd)
 	require.NoError(t, err)
 	testcontainers.CleanupContainer(t, gContainer)
 
-	<-time.After(10 * time.Second)
-	log.Println("***: evaluation in progress")
+	<-time.After(collectorRunningPeriod)
 
-	expectedLogsCount := 10
-	evaluateLogsStream(t, ctx, rContainer, expectedLogsCount)
+	evaluateLogsStream(t, ctx, rContainer, samplesCount)
+}
+
+func evaluateMetricsStream(
+	t *testing.T,
+	ctx context.Context,
+	container testcontainers.Container,
+	expectedCount int,
+) {
+	// Obtain result from container.
+	lines, err := loadResultFile(ctx, container, "/tmp/result.json")
+	require.NoError(t, err)
+
+	gms := pmetric.NewMetrics()
+	hbms := pmetric.NewMetrics()
+	jum := new(pmetric.JSONUnmarshaler)
+	for _, line := range lines {
+		m, err := jum.UnmarshalMetrics([]byte(line))
+		if err != nil || m.ResourceMetrics().Len() == 0 {
+			continue
+		}
+
+		if m.ResourceMetrics().At(0).ScopeMetrics().Len() == 0 ||
+			m.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().Len() == 0 {
+			continue
+		}
+
+		heartbeatMetricName := "sw.otelcol.uptime"
+		generatedMetricName := "gen"
+		metricName := m.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Name()
+
+		switch metricName {
+		case generatedMetricName:
+			evaluateResourceAttributes(t, m.ResourceMetrics().At(0).Resource().Attributes())
+			m.ResourceMetrics().MoveAndAppendTo(gms.ResourceMetrics())
+		case heartbeatMetricName:
+			m.ResourceMetrics().MoveAndAppendTo(hbms.ResourceMetrics())
+		default:
+			continue
+		}
+	}
+	require.Equal(t, gms.MetricCount(), expectedCount)
+	evaluateHeartbeetMetrics(t, hbms)
+}
+
+func evaluateTracesStream(
+	t *testing.T,
+	ctx context.Context,
+	container testcontainers.Container,
+	expectedCount int,
+) {
+	// Obtain result from container.
+	lines, err := loadResultFile(ctx, container, "/tmp/result.json")
+	require.NoError(t, err)
+
+	trs := ptrace.NewTraces()
+	ms := pmetric.NewMetrics()
+	tum := new(ptrace.JSONUnmarshaler)
+	mum := new(pmetric.JSONUnmarshaler)
+	for _, line := range lines {
+		// Traces to process.
+		tr, err := tum.UnmarshalTraces([]byte(line))
+		if err == nil && tr.ResourceSpans().Len() != 0 {
+			evaluateResourceAttributes(t, tr.ResourceSpans().At(0).Resource().Attributes())
+			tr.ResourceSpans().MoveAndAppendTo(trs.ResourceSpans())
+			continue
+		}
+
+		// Metrics to process.
+		m, err := mum.UnmarshalMetrics([]byte(line))
+		if err == nil && m.ResourceMetrics().Len() != 0 {
+			m.ResourceMetrics().MoveAndAppendTo(ms.ResourceMetrics())
+			continue
+		}
+	}
+
+	evaluateHeartbeetMetrics(t, ms)
+	require.Equal(t, expectedCount, trs.SpanCount())
 }
 
 func evaluateLogsStream(
@@ -193,131 +227,48 @@ func evaluateLogsStream(
 	require.NoError(t, err)
 
 	lgs := plog.NewLogs()
-	jum := new(plog.JSONUnmarshaler)
+	ms := pmetric.NewMetrics()
+	lum := new(plog.JSONUnmarshaler)
+	mum := new(pmetric.JSONUnmarshaler)
 	for _, line := range lines {
-		lg, err := jum.UnmarshalLogs([]byte(line))
-		if err != nil {
+		// Logs to process.
+		lg, err := lum.UnmarshalLogs([]byte(line))
+		if err == nil && lg.ResourceLogs().Len() != 0 {
+			evaluateResourceAttributes(t, lg.ResourceLogs().At(0).Resource().Attributes())
+			lg.ResourceLogs().MoveAndAppendTo(lgs.ResourceLogs())
 			continue
 		}
 
-		require.Equal(t, lg.ResourceLogs().Len(), 1, "it must contain exactly one resource log")
-		evaluateResourceAttributes(t, lg.ResourceLogs().At(0).Resource().Attributes())
-		lg.ResourceLogs().MoveAndAppendTo(lgs.ResourceLogs())
+		// Metrics to process.
+		m, err := mum.UnmarshalMetrics([]byte(line))
+		if err == nil && m.ResourceMetrics().Len() != 0 {
+			m.ResourceMetrics().MoveAndAppendTo(ms.ResourceMetrics())
+			continue
+		}
 	}
+
+	evaluateHeartbeetMetrics(t, ms)
 	require.Equal(t, expectedCount, lgs.LogRecordCount())
+}
+
+func evaluateHeartbeetMetrics(
+	t *testing.T,
+	ms pmetric.Metrics,
+) {
+	require.GreaterOrEqual(t, ms.ResourceMetrics().Len(), 1, "there must be at least one metric")
+	atts := ms.ResourceMetrics().At(0).Resource().Attributes()
+	v, available := atts.Get("sw.otelcol.collector.name")
+	require.True(t, available, "sw.otelcol.collector.name resource attribute must be available")
+	require.Equal(t, "testing_collector_name", v.AsString(), "attribute value must be the same")
 }
 
 func evaluateResourceAttributes(
 	t *testing.T,
 	atts pcommon.Map,
 ) {
-	val, ok := atts.Get("resource.attributes.testing_attribute")
+	val, ok := atts.Get(resourceAttributeName)
 	require.True(t, ok, "testing attribute must exist")
-	require.Equal(t, val.AsString(), "testing_value", "testing attribute value must be the same")
-}
-
-func runReceivingSolarWindsOTELCollector(
-	ctx context.Context,
-	networkName string,
-) (testcontainers.Container, error) {
-	containerName := receivingContainer
-
-	configPath, err := filepath.Abs(filepath.Join(".", "testdata", "receiving_collector.yaml"))
-	if err != nil {
-		return nil, err
-	}
-
-	lc := new(MyLogConsumer)
-	lc.Prefix = containerName
-	req := testcontainers.ContainerRequest{
-		Image: "solarwinds-otel-collector:latest",
-		LogConsumerCfg: &testcontainers.LogConsumerConfig{
-			Consumers: []testcontainers.LogConsumer{lc},
-		},
-		Files: []testcontainers.ContainerFile{
-			{
-				HostFilePath:      configPath,
-				ContainerFilePath: "/opt/default-config.yaml",
-				FileMode:          0o440,
-			},
-		},
-		WaitingFor: wait.ForLog("Everything is ready. Begin running and processing data."),
-		Networks:   []string{networkName},
-		Name:       containerName,
-	}
-
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-
-	return container, err
-}
-
-func runTestedSolarWindsOTELCollector(
-	ctx context.Context,
-	networkName string,
-) (testcontainers.Container, error) {
-	containerName := testedContainer
-
-	configPath, err := filepath.Abs(filepath.Join(".", "testdata", "emitting_collector.yaml"))
-	if err != nil {
-		return nil, err
-	}
-
-	lc := new(MyLogConsumer)
-	lc.Prefix = containerName
-	req := testcontainers.ContainerRequest{
-		Image: "solarwinds-otel-collector:latest",
-		LogConsumerCfg: &testcontainers.LogConsumerConfig{
-			Consumers: []testcontainers.LogConsumer{lc},
-		},
-		Files: []testcontainers.ContainerFile{
-			{
-				HostFilePath:      configPath,
-				ContainerFilePath: "/opt/default-config.yaml",
-				FileMode:          0o440,
-			},
-		},
-		WaitingFor: wait.ForLog("Everything is ready. Begin running and processing data."),
-		Networks:   []string{networkName},
-		Name:       containerName,
-	}
-
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-
-	return container, err
-}
-
-func runGeneratorContainer(
-	ctx context.Context,
-	networkName string,
-	cmd []string,
-) (testcontainers.Container, error) {
-	containerName := generatingContainer
-
-	lc := new(MyLogConsumer)
-	lc.Prefix = containerName
-
-	req := testcontainers.ContainerRequest{
-		Image: "ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest",
-		LogConsumerCfg: &testcontainers.LogConsumerConfig{
-			Consumers: []testcontainers.LogConsumer{lc},
-		},
-		Networks: []string{networkName},
-		Name:     containerName,
-		Cmd:      cmd,
-	}
-
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-
-	return container, err
+	require.Equal(t, val.AsString(), resourceAttributeValue, "testing attribute value must be the same")
 }
 
 func loadResultFile(
@@ -335,15 +286,7 @@ func loadResultFile(
 		return make([]string, 0), err
 	}
 
-	log.Print("*** raw content:\n" + string(content) + "\n")
+	log.Print("*** raw result content:\n" + string(content) + "\n")
 	lines := strings.Split(string(content), "\n")
 	return lines, nil
-}
-
-type MyLogConsumer struct {
-	Prefix string
-}
-
-func (lc *MyLogConsumer) Accept(l testcontainers.Log) {
-	log.Printf("***%s: %s", lc.Prefix, string(l.Content))
 }

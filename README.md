@@ -12,12 +12,13 @@ The SolarWinds OpenTelemetry collector contains following components:
   - full set of [opentelemetry-collector processors](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.113.0/processor)
   - full set of [opentelemetry-collector-contrib processors](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.113.0/processor)
 - exporters
+    - [`solarwindsexporter`](./exporter/solarwindsexporter)
     - [`otlpexporter`](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.113.0/exporter/otlpexporter)
     - [`fileexporter`](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.113.0/exporter/fileexporter)
-    - [`solarwindsexporter`](./exporter/solarwindsexporter)
     - [`debugexporter`](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.113.0/exporter/debugexporter)
     - [`nopexporter`](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.113.0/exporter/nopexporter)
 - extensions
+    - [`solarwindsextension`](./extension/solarwindsextension)
     - full set of [opentelemetry-collector extensions](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.113.0/extension)
     - full set of [opentelemetry-collector-contrib extensions](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.113.0/extension)
 - connectors

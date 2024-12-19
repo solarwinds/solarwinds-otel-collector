@@ -7,5 +7,6 @@ status:
     development: [traces, metrics, logs]
 
 tests:
+  # skipped because the exporter requires solarwindsextension to run
   skip_lifecycle: true
 

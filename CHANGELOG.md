@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.113.1
+Adds [SolarWinds Extension](./extension/solarwindsextension). The [SolarWinds Exporter](./exporter/solarwindsexporter) is now dependent on the extension.
+
 ## v0.113.0
 Initial version of SolarWinds OpenTelemetry Collector.
 The collector provides all available components (receivers, processors, exporters, connectors, providers)

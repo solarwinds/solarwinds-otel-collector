@@ -72,6 +72,23 @@ func TestConfigValidateOK(t *testing.T) {
 	assert.NoError(t, cfg.(*Config).Validate())
 }
 
+// TestConfigValidateNOK.
+func TestConfigValidateNOK(t *testing.T) {
+	cfgFile := testutil.LoadConfigTestdata(t, "invalid")
+
+	// Parse configuration.
+	factory := NewFactory()
+	cfg := factory.CreateDefaultConfig()
+	require.NoError(t, cfgFile.Unmarshal(&cfg))
+
+	// Validation should fail with an error.
+	assert.ErrorContains(
+		t,
+		cfg.(*Config).Validate(),
+		"invalid configuration",
+	)
+}
+
 // TestConfigTokenRedacted checks that the configuration
 // type doesn't leak its secret token unless it is accessed explicitly.
 func TestConfigTokenRedacted(t *testing.T) {

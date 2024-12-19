@@ -1,7 +1,2 @@
-.PHONY: test
-test:
-	go test ./...
+include ../../Makefile.Common
 
-.PHONY: generate
-generate:
-	go generate ./...

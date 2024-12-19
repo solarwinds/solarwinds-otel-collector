@@ -31,7 +31,7 @@ type SolarwindsExtension struct {
 }
 
 func newExtension(ctx context.Context, set extension.Settings, cfg *internal.Config) (*SolarwindsExtension, error) {
-	set.Logger.Info("Creating SolarwindsExtension")
+	set.Logger.Info("Creating Solarwinds Extension")
 	set.Logger.Info("Config", zap.Any("config", cfg))
 
 	e := &SolarwindsExtension{
@@ -50,12 +50,12 @@ func newExtension(ctx context.Context, set extension.Settings, cfg *internal.Con
 func (e *SolarwindsExtension) GetEndpointConfig() EndpointConfig { return newEndpointConfig(e.config) }
 
 func (e *SolarwindsExtension) Start(ctx context.Context, host component.Host) error {
-	e.logger.Info("Starting SolarwindsExtension")
+	e.logger.Info("Starting Solarwinds Extension")
 	return e.heartbeat.Start(ctx, host)
 }
 
 func (e *SolarwindsExtension) Shutdown(ctx context.Context) error {
-	e.logger.Info("Shutting down SolarwindsExtension")
+	e.logger.Info("Shutting down Solarwinds Extension")
 	// Everything must be shut down, regardless of the failure.
 	return e.heartbeat.Shutdown(ctx)
 

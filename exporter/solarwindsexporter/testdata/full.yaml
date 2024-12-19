@@ -11,4 +11,3 @@ retry_on_failure:
   multiplier: 2.4
   max_interval: "40s"
   max_elapsed_time: "400s"
-
