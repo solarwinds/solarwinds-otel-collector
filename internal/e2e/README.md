@@ -6,7 +6,7 @@ For local test runs it is required to have local build of SolarWinds OpenTelemet
 
 Tests then can be run with `go test -tags=integration` command.
 
-> [NOTE!]  
+> [!NOTE]  
 > Please refer to documentation on how to produce the local docker image [here](../../build/docker/README.md).
 
 ## Technology Stack
