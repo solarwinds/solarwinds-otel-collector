@@ -1,0 +1,43 @@
+service:
+  extensions: [solarwinds]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [solarwinds]
+    traces:
+      receivers: [otlp]
+      exporters: [solarwinds]
+    logs:
+      receivers: [otlp]
+      exporters: [solarwinds]
+
+receivers:
+  # Just as creative source.
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      cpu: {}
+      memory: {}
+      disk: {}
+      filesystem: {}
+      load: {}
+      processes: {}
+  otlp:
+    protocols:
+      grpc:
+        endpoint: :17016
+
+extensions:
+  solarwinds:
+    token: <no-matter-in-test>
+    #data_center: "na-01"
+    collector_name: "testing_collector_name"
+    endpoint_url_override: receiver:17016
+    insecure: true
+
+exporters:
+  otlp:
+    endpoint: receiver:17016
+    tls:
+      insecure: true
+  solarwinds:
