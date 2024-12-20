@@ -40,7 +40,14 @@ jobs:
         run: echo "tag=v${{ github.run_number }}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and Test
-        run: docker build . --file build/docker/Dockerfile --tag ${{ steps.generate-tag.outputs.tag }}
+        run: > 
+          docker build . --file build/docker/Dockerfile
+          --tag solarwinds-otel-collector:${{ steps.generate-tag.outputs.tag }}
+          --tag solarwinds-otel-collector:latest
+
+      - name: E2E Tests
+        working-directory: internal/e2e
+        run: make e2e-tests
 
   deploy_dockerhub:
     runs-on: ubuntu-latest
