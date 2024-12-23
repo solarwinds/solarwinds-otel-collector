@@ -1,0 +1,28 @@
+service:
+  extensions: [solarwinds]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [solarwinds]
+    traces:
+      receivers: [otlp]
+      exporters: [solarwinds]
+    logs:
+      receivers: [otlp]
+      exporters: [solarwinds]
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: :17016
+
+extensions:
+  solarwinds:
+    token: <no-matter-in-test>
+    collector_name: "testing_collector_name"
+    endpoint_url_override: receiver:17016
+    insecure: true
+
+exporters:
+  solarwinds:

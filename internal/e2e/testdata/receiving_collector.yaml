@@ -1,0 +1,20 @@
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [file]
+    traces:
+      receivers: [otlp]
+      exporters: [file]
+    logs:
+      receivers: [otlp]
+      exporters: [file]
+
+receivers:
+  otlp:
+    protocols:
+      grpc: 
+        endpoint: :17016
+exporters:
+  file:
+    path: /tmp/result.json
