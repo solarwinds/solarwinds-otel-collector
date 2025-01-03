@@ -1,6 +1,6 @@
 name: Feature request
 description: Suggest an idea for this project
-labels: ["enhancement", "needs triage"]
+labels: ["enhancement", "feature", "needs triage"]
 body:
   - type: dropdown
     id: component
@@ -11,6 +11,7 @@ body:
       options:
         - cmd/solarwinds-otel-collector
         - exporter/solarwindsexporter
+        - extension/solarwindsextension
   - type: textarea
     attributes:
       label: Is your feature request related to a problem? Please describe.

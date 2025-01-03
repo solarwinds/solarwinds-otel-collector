@@ -17,6 +17,7 @@ body:
       options:
         - cmd/solarwinds-otel-collector
         - exporter/solarwindsexporter
+        - extension/solarwindsextension
   - type: textarea
     attributes:
       label: Description
