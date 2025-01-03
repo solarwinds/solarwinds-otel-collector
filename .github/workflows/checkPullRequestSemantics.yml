@@ -1,0 +1,25 @@
+name: Check Pull Request Semantics
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release/**
+    types:
+      - opened
+      - edited
+
+  workflow_dispatch:
+
+jobs:
+  check_semantics:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check PR title
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+      run: |
+        if [[ ! ${PR_TITLE} =~ ^(build|ci|chore|docs|feature|fix|perf|refactor|style|test):[[:space:]](#[[:digit:]]+[[:space:]]){0,1}([^ ,#].*)$ ]]; then
+          echo "::error::Invalid Pull Request title. Please update it according to guidelines: https://github.com/solarwinds/solarwinds-otel-collector/docs/development-guidelines.md#pull-requests"
+          exit 1
+        fi

@@ -9,6 +9,8 @@ updates:
     schedule:
       interval: weekly
       day: sunday
+    commit-message:
+      prefix: "chore: "
   - package-ecosystem: docker
     directory: /build/docker
     labels:
@@ -17,6 +19,8 @@ updates:
     schedule:
       interval: weekly
       day: sunday
+    commit-message:
+      prefix: "chore: "
   - package-ecosystem: gomod
     directories:
       - /cmd
@@ -42,3 +46,5 @@ updates:
         update-types:
         - "patch"
         - "minor"
+    commit-message:
+      prefix: "chore: "
