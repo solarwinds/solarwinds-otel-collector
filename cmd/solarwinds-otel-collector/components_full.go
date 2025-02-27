@@ -163,6 +163,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver"
 	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver"
+	"github.com/solarwinds/solarwinds-otel-collector/receiver/swok8sobjectsreceiver"
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 
@@ -335,6 +336,7 @@ func components() (otelcol.Factories, error) {
 		zookeeperreceiver.NewFactory(),
 		nopreceiver.NewFactory(),
 		otlpreceiver.NewFactory(),
+		swok8sobjectsreceiver.NewFactory(),
 	)
 
 	if err != nil {
