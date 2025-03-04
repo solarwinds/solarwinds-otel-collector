@@ -33,6 +33,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector/k8s/connectioncheck"
 	"github.com/solarwinds/solarwinds-otel-collector/processor/k8seventgenerationprocessor"
+	"github.com/solarwinds/solarwinds-otel-collector/receiver/swok8sobjectsreceiver"
 
 	"go.opentelemetry.io/collector/connector"
 	"go.opentelemetry.io/collector/connector/forwardconnector"
@@ -91,6 +92,7 @@ func components() (otelcol.Factories, error) {
 		otlpreceiver.NewFactory(),
 		receivercreator.NewFactory(),
 		simpleprometheusreceiver.NewFactory(),
+		swok8sobjectsreceiver.NewFactory(),
 	)
 
 	if err != nil {
