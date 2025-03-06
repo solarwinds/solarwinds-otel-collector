@@ -1,0 +1,20 @@
+name: Docker upload action
+
+inputs:
+  image_tag:
+    description: Image name to be saved as an artifact
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare tar archive
+      # composite action needs shell defined which is problem for windows vs linux
+      shell: bash
+      run: docker save --output ${{ inputs.image_tag }}.tar solarwinds-otel-collector:${{ inputs.image_tag }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-image-${{ inputs.image_tag }}
+        path: ${{ inputs.image_tag }}.tar

@@ -1,0 +1,49 @@
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+    paths-ignore:
+      # do not run this workflow, deploy will happen and this workflow will be called from within deploy workflow
+      - 'pkg/version/version.go'
+
+  # just for testing
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  DOCKERHUB_IMAGE: solarwinds/solarwinds-otel-collector
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check licenses
+        run: make ci-check-licenses
+
+      - name: Check that the release version is synced across the repo
+        run: |
+          make prepare-release version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")
+          git diff --exit-code
+
+  build_linux_amd:
+    name: Build and Test AMD images
+    uses: ./.github/workflows/build-linux-amd.yml
+    secrets: inherit
+
+  build_linux_arm:
+    name: Build and Test ARM images
+    uses: ./.github/workflows/build-linux-arm.yml
+    secrets: inherit
+
+  build_windows:
+    name: Build and Test Windows images
+    uses: ./.github/workflows/build-windows.yml
+    secrets: inherit

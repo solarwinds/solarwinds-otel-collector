@@ -1,0 +1,19 @@
+on:
+  workflow_call:
+    outputs:
+      tag:
+        description: Generated tag
+        value: ${{ jobs.generate_tag.outputs.tag }}
+
+jobs:
+  generate_tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.generate-tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate Docker Image Tag
+        id: generate-tag
+        run: echo "tag=v${{ github.run_number }}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT

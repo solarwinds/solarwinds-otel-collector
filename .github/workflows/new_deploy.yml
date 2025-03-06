@@ -1,0 +1,58 @@
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    branches:
+      - main
+      - 'release/**'
+    paths:
+      - 'pkg/version/version.go'
+
+jobs:
+  build:
+    name: Build all images
+    uses: ./.github/workflows/build-and-test.yml
+    secrets: inherit
+
+  deploy_linux:
+    name: Deploy Linux images
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: linux-image-*
+          merge-multiple: true
+
+      - name: Load images
+        run: |
+          docker load --input solarwinds-otel-collector-linux.tar
+
+  deploy_windows:
+    name: Deploy Windows images
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: windows-image-*
+          merge-multiple: true
+
+      - name: Load images
+        run: |
+          docker load --input solarwinds-otel-collector-windows-ltsc2022.tar
+
+  # TODO: tag_images
+  # TODO: analyze cves -> call composite action
+  # TODO: push_images
+  # TODO: upload_sarif files
+  # TODO: upload manifest
+  # TODO: create github release
+
+

@@ -1,0 +1,54 @@
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+env:
+  DOCKERHUB_IMAGE: solarwinds/solarwinds-otel-collector
+
+jobs:
+  generate_tag:
+    name: Generate run tag
+    uses: ./.github/workflows/generate-tag.yml
+
+  build:
+    runs-on: ubuntu-24.04-arm
+    needs: generate_tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ARM Image
+        run: >
+          docker build . --file build/docker/Dockerfile
+          --tag solarwinds-otel-collector:${{ needs.generate_tag.outputs.tag }}-arm
+
+#      - name: Docker scout image scan
+#        does it make sense to compare architectures, or it makes sense do it once let's say for AMD?
+
+      - name: Upload AMR Image
+        # If on main
+        uses: ./.github/actions/uploadDockerImage
+        with:
+          image_tag: ${{ needs.generate_tag.outputs.tag }}-arm
+
+  build-k8s:
+    runs-on: ubuntu-24.04-arm
+    needs: generate_tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build K8S ARM Image
+        run: >
+          docker build . --file build/docker/Dockerfile.k8s
+          --tag solarwinds-otel-collector:${{ needs.generate_tag.outputs.tag }}-k8s-arm
+
+      - name: Upload K8S ARM Image
+        # If on main
+        uses: ./.github/actions/uploadDockerImage
+        with:
+          image_tag: ${{ needs.generate_tag.outputs.tag }}-k8s-arm

@@ -1,0 +1,109 @@
+name: New Build and Test
+
+# Run on pull request only
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+env:
+  DOCKERHUB_IMAGE: solarwinds/solarwinds-otel-collector
+
+# Run linux amd, k8s linux amd
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check licenses
+        run: make ci-check-licenses
+      - name: Check that the release version is synced across the repo
+        run: |
+          make prepare-release version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")
+          git diff --exit-code
+
+  generate_tag:
+    name: Generate run tag
+    uses: ./.github/workflows/generate-tag.yml
+
+  build_and_test:
+    runs-on: ubuntu-latest
+    needs: generate_tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # I think after we introduce the goreleaser this can stay this way it is easier to read
+      - name: Build and Test - Full Image
+        run: >
+          docker build . --file build/docker/Dockerfile
+          --tag solarwinds-otel-collector:${{ needs.generate_tag.outputs.tag }}
+          --tag solarwinds-otel-collector:latest
+
+      # this works with latest only, so it cannot be run on other distributions
+      - name: E2E Tests
+        working-directory: internal/e2e
+        run: make e2e-tests
+
+      # needs the image, so it cannot be workflow, but maybe it could have been called from the workflow and use the same context
+      # has to be in the same workflow as the image, but we could use reusable workflow
+      # the only benefit it would bring now is we would cut username and token from the parameters, so not worth it
+      - name: Docker scout image scan
+        uses: ./.github/actions/dockerScoutScan
+        with:
+          username: ${{ vars.ENOPS5919_DOCKER_SCOUT_CI_USER }}
+          token: ${{ secrets.ENOPS5919_DOCKER_SCOUT_CI_PAT }}
+          current-image: solarwinds-otel-collector
+          current-tag: ${{ needs.generate_tag.outputs.tag }}
+          compare-to-image: ${{ env.DOCKERHUB_IMAGE }}
+          compare-to-tag: latest
+
+      - name: Upload image
+        # If on main
+        uses: ./.github/actions/uploadDockerImage
+        with:
+          image_tag: ${{ needs.generate_tag.outputs.tag }}
+
+
+  build_k8s:
+    runs-on: ubuntu-latest
+    needs: generate_tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build - k8s Image
+        run: >
+          docker build . --file build/docker/Dockerfile.k8s
+          --tag solarwinds-otel-collector:${{ needs.generate_tag.outputs.tag }}-k8s
+
+      - name: Docker scout image scan
+        uses: ./.github/actions/dockerScoutScan
+        with:
+          username: ${{ vars.ENOPS5919_DOCKER_SCOUT_CI_USER }}
+          token: ${{ secrets.ENOPS5919_DOCKER_SCOUT_CI_PAT }}
+          current-image: solarwinds-otel-collector
+          current-tag: ${{ needs.generate_tag.outputs.tag }}-k8s
+          compare-to-image: ${{ env.DOCKERHUB_IMAGE }}
+          compare-to-regex: '[0-9]+\.[0-9]+\.[0-9]+-k8s$'
+
+      - name: Upload image
+        # If on main
+        uses: ./.github/actions/uploadDockerImage
+        with:
+          image_tag: ${{ needs.generate_tag.outputs.tag }}-k8s
+
+  write_docker_scout_info_comment:
+    runs-on: ubuntu-latest
+    needs: [ 'build_and_test', 'build_k8s' ]
+    if: |
+      !contains(needs.*.result, 'failure') &&
+      github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write Docker Scout Info Comment
+        uses: ./.github/actions/dockerScoutComment
