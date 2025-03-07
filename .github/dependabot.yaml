@@ -11,6 +11,7 @@ updates:
       day: sunday
     commit-message:
       prefix: "chore: "
+
   - package-ecosystem: docker
     directory: /build/docker
     labels:
@@ -19,32 +20,117 @@ updates:
     schedule:
       interval: weekly
       day: sunday
+    groups:
+      docker:
+        patterns:
+          - "*"
     commit-message:
       prefix: "chore: "
+
+  - package-ecosystem: gomod
+    directory: "/cmd/solarwinds-otel-collector"
+    schedule:
+      interval: weekly
+      day: sunday
+    allow:
+      - dependency-type: "direct"
+    groups:
+      collector-opentelemetry:
+        patterns:
+        - "*opentelemetry*"
+        - "*solarwinds-otel-collector*"
+      collector-miscellaneous:
+        exclude-patterns:
+          - "*opentelemetry*"
+          - "*solarwinds-otel-collector*"
+    commit-message:
+      prefix: "chore: "
+
+  - package-ecosystem: gomod
+    directory: "/extension/solarwindsextension"
+    schedule:
+      interval: weekly
+      day: sunday
+    allow:
+      - dependency-type: "direct"
+    groups:
+      solarwindsextension:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore: "
+
+  - package-ecosystem: gomod
+    directory: "/processor/k8seventgenerationprocessor"
+    schedule:
+      interval: weekly
+      day: sunday
+    allow:
+      - dependency-type: "direct"
+    groups:
+      k8seventgenerationprocessor:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore: "
+
   - package-ecosystem: gomod
     directories:
-      - /cmd
-      - /exporter
-    labels:
-      - dependencies
-      - go
+      - "/internal/tools"
+      - "/internal/k8sconfig"
+      - "/internal/e2e"
     schedule:
-      interval: "daily"
+      interval: weekly
+      day: sunday
     allow:
-      # Allow both direct and indirect updates for all packages
-      - dependency-type: "all"
-    ignore:
-      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
-      - dependency-name: "go.opentelemetry.io/collector*"
-    # Disable version updates
-    open-pull-requests-limit: 0
+      - dependency-type: "direct"
     groups:
-      minor-and-patch:
-        applies-to: security-updates
+      internal:
         patterns:
-        - "*"
-        update-types:
-        - "patch"
-        - "minor"
+          - "*"
+    commit-message:
+      prefix: "chore: "
+
+  - package-ecosystem: gomod
+    directory: "/receiver/swohostmetricsreceiver"
+    schedule:
+      interval: weekly
+      day: sunday
+    allow:
+      - dependency-type: "direct"
+    groups:
+      swohostmetricsreceiver:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore: "
+
+  - package-ecosystem: gomod
+    directory: "/receiver/swok8sobjectsreceiver"
+    schedule:
+      interval: weekly
+      day: sunday
+    allow:
+      - dependency-type: "direct"
+    groups:
+      swohostmetricsreceiver:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore: "
+
+  - package-ecosystem: gomod
+    directories:
+      - "/pkg/version"
+      - "/pkg/testutil"
+    schedule:
+      interval: weekly
+      day: sunday
+    allow:
+      - dependency-type: "direct"
+    groups:
+      pkg:
+        patterns:
+          - "*"
     commit-message:
       prefix: "chore: "

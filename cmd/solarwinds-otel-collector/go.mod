@@ -749,3 +749,6 @@ replace golang.org/x/crypto => golang.org/x/crypto v0.35.0
 
 // Temporary fix for https://github.com/solarwinds/solarwinds-otel-collector/issues/69
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.27.0
+
+// openshift removed all tags from their repo, use the pseudoversion from the release-4.4, first with go.mod
+replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20200618202633-7192180f496a
