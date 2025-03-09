@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.23.5-bookworm AS base
+FROM docker.io/library/golang:1.24.1-bookworm AS base
 
 COPY /LICENSE /LICENSE
 COPY ./ /src
