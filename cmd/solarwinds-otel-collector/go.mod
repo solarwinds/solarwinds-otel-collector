@@ -167,7 +167,7 @@ require (
 	github.com/solarwinds/solarwinds-otel-collector/processor/k8seventgenerationprocessor v0.119.3
 	github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver v0.119.3
 	github.com/solarwinds/solarwinds-otel-collector/receiver/swok8sobjectsreceiver v0.119.3
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	go.opentelemetry.io/collector/component v0.119.0
 	go.opentelemetry.io/collector/confmap v1.26.0
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.25.0
