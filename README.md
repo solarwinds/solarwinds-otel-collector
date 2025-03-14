@@ -29,7 +29,7 @@ Configuration for SolarWinds OTel Collector has to contain [SolarWinds Extension
 
 ### Example with docker
 1. Generate your ingestion token in SWO. See [API Tokens](https://documentation.solarwinds.com/en/success_center/observability/content/settings/api-tokens.htm).
-2. Create a `config.yaml` file that contains configuration for the SolarWinds OTel Collector. Insert the ingestion token and choose a correct data center (na-01, na-02, eu-01). Specify the collector name.
+2. Create a `config.yaml` file that contains configuration for the SolarWinds OTel Collector. Insert the ingestion token and choose a correct data center (na-01, na-02, eu-01, ap-01). Specify the collector name.
 ```yaml
 service:
   extensions: [solarwinds]
